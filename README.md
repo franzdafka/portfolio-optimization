@@ -1,7 +1,6 @@
 # Portfolio Optimization — Markowitz Mean-Variance Theory
 
-> A clean Python implementation of **Markowitz portfolio optimization** from first principles —  
-> no black-box libraries, just linear algebra and constrained optimization.
+> A clean Python implementation of **Markowitz portfolio optimization** 
 
 ![Efficient Frontier](efficient_frontier.png)
 

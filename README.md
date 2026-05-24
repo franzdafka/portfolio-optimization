@@ -75,6 +75,11 @@ By solving the min-variance problem for all $r^* \in [\mu_{min},\ \mu_{max}]$, w
 
 The frontier is a **parabola** in $(\sigma^2, \mu)$ space (hyperbola in $(\sigma, \mu)$ space).
 
+# By the way this was the part that actually made the theory click for me  
+seeing the curve emerge from 300 separate optimization problems, 
+each one a constrained minimum. The equal-weight portfolio sitting 
+*inside* the frontier was the most satisfying sanity check.
+
 ---
 
 ### 5. Two-Fund Separation Theorem

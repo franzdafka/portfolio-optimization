@@ -182,6 +182,17 @@ MarkowitzOptimizer(returns: pd.DataFrame, risk_free_rate: float = 0.02)
 
 ---
 
+## Motivation
+
+During my microeconomics course at university, we briefly covered 
+portfolio theory and the idea that diversification reduces risk and we calculated it through math.
+
+That really stuck with me and this project is my attempt to go deeper and to  
+implement Markowitz optimization from scratch and to understand the 
+linear algebra behind it, and verify the theory on real market data.
+
+---
+
 ## References
 
 - Markowitz, H. (1952). *Portfolio Selection*. **Journal of Finance**, 7(1), 77–91.

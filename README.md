@@ -67,9 +67,9 @@ $$w^*_{tangency} \propto \Sigma^{-1}(\mu - r_f \mathbf{1})$$
 
 $$\mu_p = r_f + \frac{\mu_{tan} - r_f}{\sigma_{tan}} \cdot \sigma_p$$
 
-The tangency portfolio made me appreciate the geometric 
+(The tangency portfolio made me appreciate the geometric 
 intuition cuz it's literally the point where a line from the 
-risk-free rate just touches the frontier. Diagram looks lit!
+risk-free rate just touches the frontier. Diagram looks lit!)
 
 ---
 
@@ -79,10 +79,10 @@ By solving the min-variance problem for all $r^* \in [\mu_{min},\ \mu_{max}]$, w
 
 The frontier is a **parabola** in $(\sigma^2, \mu)$ space (hyperbola in $(\sigma, \mu)$ space).
 
-By the way this was the part that actually made the theory click for me  
+(By the way this was the part that actually made the theory click for me  
 seeing the curve emerge from 300 separate optimization problems, 
 each one a constrained minimum. The equal-weight portfolio sitting 
-*inside* the frontier was the most satisfying sanity check.
+*inside* the frontier was the most satisfying sanity check.)
 
 ---
 
@@ -189,7 +189,7 @@ MarkowitzOptimizer(returns: pd.DataFrame, risk_free_rate: float = 0.02)
 | KKT conditions | Necessary optimality conditions for the constrained QP |
 | Lagrange multipliers | Derive closed-form solutions analytically |
 
-Took me a while to understand why the covariance matrix has to be positive semi-definite :)
+(Took me a while to understand why the covariance matrix has to be positive semi-definite :3 )
 
 ---
 

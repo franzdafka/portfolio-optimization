@@ -84,7 +84,7 @@ The frontier is a **parabola** in $(\sigma^2, \mu)$ space (hyperbola in $(\sigma
 
 $$w^* = \alpha\, w_{GMV} + (1 - \alpha)\, w_{tan}, \qquad \alpha \in \mathbb{R}$$
 
-This is a fundamental result in portfolio theory — the entire efficient frontier can be constructed from just two "mutual funds".
+This is a fundamental result in portfolio theory is the entire efficient frontier can be constructed from just two "mutual funds".
 
 ---
 
@@ -179,6 +179,8 @@ MarkowitzOptimizer(returns: pd.DataFrame, risk_free_rate: float = 0.02)
 | Quadratic form | Portfolio variance $\sigma_p^2 = w^\top \Sigma w$ |
 | KKT conditions | Necessary optimality conditions for the constrained QP |
 | Lagrange multipliers | Derive closed-form solutions analytically |
+
+# Took me a while to understand why the covariance matrix has to be positive semi-definite :)
 
 ---
 

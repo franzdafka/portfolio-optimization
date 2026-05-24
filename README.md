@@ -71,6 +71,28 @@ $$\mu_p = r_f + \frac{\mu_{tan} - r_f}{\sigma_{tan}} \cdot \sigma_p$$
 intuition cuz it's literally the point where a line from the 
 risk-free rate just touches the frontier. Diagram looks lit!)
 
+### Why Markowitz Overconcentrates
+
+One thing that surprised me when I ran this on real data: the optimizer 
+tends to put almost everything into one or two assets. Max Sharpe ended 
+up 94% MSFT. Min Variance was 67% AMZN.
+
+This is actually a known problem, not a bug. The optimizer takes 
+estimated μ and Σ at face value and goes all-in on whatever looks 
+best. In practice:
+
+- Small errors in estimating μ get amplified massively
+- The solution is hyper-sensitive to input assumptions
+- A tiny change in expected returns can flip the weights completely
+
+This is called **estimation error** and it's why practitioners rarely 
+use vanilla Markowitz directly. Extensions like Black-Litterman or 
+adding weight constraints (e.g. max 30% per asset) exist specifically 
+to fix this.
+
+I added a long-only constraint (`w ≥ 0`) but no concentration limit, so
+that would be a natural next step.
+
 ---
 
 ### 4. Efficient Frontier

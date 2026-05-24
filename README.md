@@ -93,6 +93,15 @@ to fix this.
 I added a long-only constraint (`w ≥ 0`) but no concentration limit, so
 that would be a natural next step.
 
+### Sensitivity Analysis
+
+One of the most striking findings: a 0.5% annual change in expected 
+returns — well within normal estimation error — can completely reshuffle 
+the optimal weights.
+
+I ran this systematically: perturbed each asset's μ by ±0.5% and tracked 
+how the tangency portfolio reacted. Some assets caused 50%+ weight shifts 
+from
 ---
 
 ### 4. Efficient Frontier

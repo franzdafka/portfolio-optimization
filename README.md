@@ -1,97 +1,74 @@
 # Portfolio Optimization — Markowitz Mean-Variance Theory
 
-> A clean Python implementation of **Markowitz portfolio optimization** 
+Python implementation of Markowitz mean-variance optimization: efficient frontier, GMV and tangency portfolios, and Monte Carlo feasible set — validated on real S&P 500 data (2024–2025).
 
-![Efficient Frontier](efficient_frontier.png)
+![Efficient Frontier — Real Data](efficient_frontier_real.png)
+
+---
+
+## Results (Real Data — S&P 500 Top-5, 2024–2025)
+
+| Portfolio | Annual Return | Volatility | Sharpe |
+|-----------|--------------|------------|--------|
+| Min Variance | 7.3% | 22.6% | 0.10 |
+| Max Sharpe (Tangency) | 15.4% | 30.9% | 0.34 |
+| Equal Weight | ~10.5% | ~35.0% | ~0.15 |
+
+**Max Sharpe concentrates 93.5% in MSFT, 6.5% in AAPL** — replicating the known Markowitz overconcentration problem (Michaud, 1989): a 0.5% perturbation in input returns produces 50pp+ weight reallocation across the frontier.
+
+Risk-free rate: 5.0% (US T-bill). Solver: `scipy.optimize.minimize` SLSQP.
 
 ---
 
 ## Mathematical Foundation
 
-### 1. Setup
+### Setup
 
-We have $n$ risky assets. Over $T$ periods we observe returns matrix $R \in \mathbb{R}^{T \times n}$.
+Given $n$ assets and $T$ observations, we estimate:
 
-From the data we estimate:
+$$\mu = \frac{1}{T} R^\top \mathbf{1} \in \mathbb{R}^n \qquad \Sigma = \frac{1}{T-1}(R - \mathbf{1}\mu^\top)^\top(R - \mathbf{1}\mu^\top) \in \mathbb{R}^{n \times n}$$
 
-$$\mu = \frac{1}{T} R^\top \mathbf{1} \in \mathbb{R}^n \qquad \text{(expected returns)}$$
+$\Sigma$ is symmetric positive semi-definite: $\forall w,\ w^\top \Sigma w \geq 0$.
 
-$$\Sigma = \frac{1}{T-1}(R - \mathbf{1}\mu^\top)^\top(R - \mathbf{1}\mu^\top) \in \mathbb{R}^{n \times n} \qquad \text{(covariance matrix)}$$
-
-$\Sigma$ is **symmetric positive semi-definite**: $\forall w,\ w^\top \Sigma w \geq 0$.
-
----
-
-### 2. Portfolio statistics
-
-A portfolio is fully described by its weight vector $w \in \mathbb{R}^n$ (with $\mathbf{1}^\top w = 1$).
+### Portfolio Statistics
 
 | Quantity | Formula |
 |---|---|
 | Expected return | $\mu_p = w^\top \mu$ |
 | Variance | $\sigma_p^2 = w^\top \Sigma w$ |
-| Volatility | $\sigma_p = \sqrt{w^\top \Sigma w}$ |
-| Sharpe ratio | $S = \dfrac{\mu_p - r_f}{\sigma_p}$ |
+| Sharpe ratio | $S = (\mu_p - r_f) / \sigma_p$ |
 
----
+### Optimization Problems
 
-### 3. The Optimization Problems
+**Minimum Variance** (for target return $r^*$):
 
-#### 3a. Minimum Variance (for a given target return $r^*$)
+$$\min_{w}\ w^\top \Sigma w \quad \text{s.t.}\ w^\top \mu = r^*,\ \mathbf{1}^\top w = 1,\ w \geq 0$$
 
-$$\boxed{\min_{w \in \mathbb{R}^n}\ w^\top \Sigma w \quad \text{s.t.}\ w^\top \mu = r^*,\ \mathbf{1}^\top w = 1,\ w \geq 0}$$
+Quadratic program; solved numerically via SLSQP.
 
-This is a **Quadratic Program (QP)**: quadratic objective, linear constraints.
-
-#### 3b. Global Minimum Variance (GMV)
-
-Remove the return constraint. Closed-form solution (unconstrained, long-short):
+**Global Minimum Variance** — closed-form (unconstrained):
 
 $$w^*_{GMV} = \frac{\Sigma^{-1}\mathbf{1}}{\mathbf{1}^\top \Sigma^{-1} \mathbf{1}}$$
 
-**Derivation:** Write the Lagrangian $\mathcal{L} = w^\top \Sigma w - \lambda(\mathbf{1}^\top w - 1)$.
+Derived from Lagrangian $\mathcal{L} = w^\top \Sigma w - \lambda(\mathbf{1}^\top w - 1)$; FOC gives $2\Sigma w = \lambda \mathbf{1}$, normalized by $\mathbf{1}^\top w = 1$.
 
-First-order condition: $\nabla_w \mathcal{L} = 2\Sigma w - \lambda \mathbf{1} = 0 \implies w = \frac{\lambda}{2}\Sigma^{-1}\mathbf{1}$.
+**Tangency Portfolio (Max Sharpe)** — closed-form (unconstrained):
 
-Normalize: $\mathbf{1}^\top w = 1 \implies \lambda/2 = 1/(\mathbf{1}^\top \Sigma^{-1}\mathbf{1})$.
+$$w^*_{tan} \propto \Sigma^{-1}(\mu - r_f \mathbf{1})$$
 
-#### 3c. Maximum Sharpe Ratio (Tangency Portfolio)
-
-$$\max_{w}\ S(w) = \frac{w^\top \mu - r_f}{\sqrt{w^\top \Sigma w}} \quad \text{s.t.}\ \mathbf{1}^\top w = 1$$
-
-Closed-form (unconstrained, long-short):
-
-$$w^*_{tangency} \propto \Sigma^{-1}(\mu - r_f \mathbf{1})$$
-
-**Why?** This is the portfolio on the efficient frontier tangent to the **Capital Market Line** (CML):
+Tangent point of the Capital Market Line to the efficient frontier:
 
 $$\mu_p = r_f + \frac{\mu_{tan} - r_f}{\sigma_{tan}} \cdot \sigma_p$$
 
-(The tangency portfolio made me appreciate the geometric 
-intuition cuz it's literally the point where a line from the 
-risk-free rate just touches the frontier. Diagram looks lit!)
+### Efficient Frontier
 
-### Why Markowitz Overconcentrates
+Solving the min-variance QP across $r^* \in [\mu_{min},\ \mu_{max}]$ traces the efficient frontier — a **hyperbola** in $(\sigma, \mu)$ space. The 8,000-point Monte Carlo cloud (Dirichlet-sampled) visualises the full feasible set.
 
-One thing that surprised me when I ran this on real data: the optimizer 
-tends to put almost everything into one or two assets. Max Sharpe ended 
-up 94% MSFT. Min Variance was 67% AMZN.
+### Two-Fund Separation
 
-This is actually a known problem, not a bug. The optimizer takes 
-estimated μ and Σ at face value and goes all-in on whatever looks 
-best. In practice:
+Any efficient portfolio is a linear combination of GMV and tangency:
 
-- Small errors in estimating μ get amplified massively
-- The solution is hyper-sensitive to input assumptions
-- A tiny change in expected returns can flip the weights completely
-
-This is called **estimation error** and it's why practitioners rarely 
-use vanilla Markowitz directly. Extensions like Black-Litterman or 
-adding weight constraints (e.g. max 30% per asset) exist specifically 
-to fix this.
-
-I added a long-only constraint (`w ≥ 0`) but no concentration limit, so
-that would be a natural next step.
+$$w^* = \alpha\, w_{GMV} + (1-\alpha)\, w_{tan}, \qquad \alpha \in \mathbb{R}$$
 
 ### Sensitivity Analysis
 
@@ -104,27 +81,14 @@ how the tangency portfolio reacted. Some assets caused 50%+ weight shifts
 from
 ---
 
-### 4. Efficient Frontier
+## Markowitz Instability
 
-By solving the min-variance problem for all $r^* \in [\mu_{min},\ \mu_{max}]$, we trace the **efficient frontier** — the set of portfolios with maximum return for each level of risk.
+The optimizer is hyper-sensitive to input estimates. On real S&P 500 data:
 
-The frontier is a **parabola** in $(\sigma^2, \mu)$ space (hyperbola in $(\sigma, \mu)$ space).
+- **Min Variance**: 66.9% AMZN, 19.7% AAPL, 13.4% GOOGL
+- **Max Sharpe**: 93.5% MSFT, 6.5% AAPL
 
-(By the way this was the part that actually made the theory click for me  
-seeing the curve emerge from 300 separate optimization problems, 
-each one a constrained minimum. The equal-weight portfolio sitting 
-*inside* the frontier was the most satisfying sanity check.)
-
----
-
-### 5. Two-Fund Separation Theorem
-
-> Any efficient portfolio is a **linear combination** of just two portfolios:  
-> the GMV portfolio and the tangency portfolio.
-
-$$w^* = \alpha\, w_{GMV} + (1 - \alpha)\, w_{tan}, \qquad \alpha \in \mathbb{R}$$
-
-This is a fundamental result in portfolio theory is the entire efficient frontier can be constructed from just two "mutual funds".
+A 0.5% perturbation in $\mu$ produces 50pp+ weight reallocation — replicating Michaud (1989). This is estimation error amplification, not a solver bug. Practitioners address it via Black-Litterman, resampling, or hard weight caps (e.g. $w_i \leq 30\%$). The long-only constraint ($w \geq 0$) is implemented; concentration limits are a natural extension.
 
 ---
 
@@ -132,112 +96,86 @@ This is a fundamental result in portfolio theory is the entire efficient frontie
 
 ```
 portfolio-optimization/
-├── portfolio_optimizer.py   # Core: MarkowitzOptimizer class
-├── visualize.py             # Efficient frontier plot
-├── requirements.txt
-└── README.md
+├── portfolio_optimizer.py   — MarkowitzOptimizer class (GMV, Tangency, Frontier)
+├── visualize.py             — Efficient frontier dashboard (Matplotlib)
+├── analysis.ipynb           — Real data analysis (yfinance, S&P 500 2024–2025)
+├── efficient_frontier.png   — Synthetic data output
+├── efficient_frontier_real.png — Real market data output
+└── requirements.txt
 ```
 
 ---
 
 ## Usage
 
-```bash
-pip install -r requirements.txt
-```
-
-### Run the optimizer
-
 ```python
 import pandas as pd
 from portfolio_optimizer import MarkowitzOptimizer
 
-# Load your returns data (rows = time periods, columns = assets)
+# Daily returns DataFrame (rows = dates, columns = tickers)
 returns = pd.read_csv("returns.csv", index_col=0)
 
 opt = MarkowitzOptimizer(returns, risk_free_rate=0.05/252)
 
-# Global Minimum Variance portfolio
-gmv = opt.global_minimum_variance()
-print(gmv)
-
-# Maximum Sharpe Ratio (Tangency) portfolio
-tangency = opt.maximize_sharpe()
-print(tangency)
-
-# Efficient frontier (200 points)
-frontier = opt.efficient_frontier(n_points=200)
-print(frontier.head())
+gmv      = opt.global_minimum_variance()   # Min variance
+tangency = opt.maximize_sharpe()           # Max Sharpe
+frontier = opt.efficient_frontier(n_points=300)
 ```
 
-### Generate the plot
-
 ```bash
-python visualize.py
+python visualize.py   # generates efficient_frontier.png
 ```
 
 ---
 
-## API Reference
+## API
 
-### `MarkowitzOptimizer`
-
-```python
-MarkowitzOptimizer(returns: pd.DataFrame, risk_free_rate: float = 0.02)
-```
+### `MarkowitzOptimizer(returns, risk_free_rate=0.02)`
 
 | Method | Description |
 |---|---|
-| `minimize_variance(target_return, long_only)` | Min-variance QP for given return target |
-| `maximize_sharpe(long_only)` | Tangency portfolio (max Sharpe) |
-| `global_minimum_variance(long_only)` | GMV portfolio (no return constraint) |
-| `efficient_frontier(n_points, long_only)` | Trace full efficient frontier |
+| `minimize_variance(target_return, long_only)` | Min-variance QP for given $r^*$ |
+| `maximize_sharpe(long_only)` | Tangency portfolio |
+| `global_minimum_variance(long_only)` | GMV portfolio |
+| `efficient_frontier(n_points, long_only)` | Full frontier (DataFrame) |
 | `portfolio_return(w)` | $w^\top \mu$ |
-| `portfolio_variance(w)` | $w^\top \Sigma w$ |
 | `portfolio_volatility(w)` | $\sqrt{w^\top \Sigma w}$ |
-| `sharpe_ratio(w)` | $(w^\top\mu - r_f) / \sigma_p$ |
+| `sharpe_ratio(w)` | $(w^\top\mu - r_f)/\sigma_p$ |
+
+### `monte_carlo_portfolios(optimizer, n_simulations=10_000)`
+
+Samples random portfolios from $\text{Dirichlet}(\mathbf{1})$ for feasible set visualization.
 
 ---
 
 ## Implementation Notes
 
-- **Solver:** `scipy.optimize.minimize` with `method="SLSQP"` (Sequential Least-Squares Quadratic Programming)
-- **Covariance estimation:** Sample covariance from the returns matrix
-- **Long-only constraint:** $w_i \geq 0\ \forall i$ (can be disabled for long-short portfolios)
-- **Stability:** Pseudoinverse (`numpy.linalg.pinv`) used instead of regular inverse to handle near-singular covariance matrices
-- **Monte Carlo:** 10,000 random portfolios sampled from $\text{Dirichlet}(\mathbf{1})$ for visualization
-
----
-
-## Key Concepts from Linear Algebra
-
-| Concept | Role |
+| Detail | Choice |
 |---|---|
-| Positive semi-definite matrix | $\Sigma$ must be PSD: $w^\top \Sigma w \geq 0$ (variance ≥ 0) |
-| Matrix inverse / pseudoinverse | Closed-form GMV and tangency portfolios |
-| Cholesky decomposition | Generating correlated random returns: $R = Z L^\top$, $\Sigma = L L^\top$ |
-| Quadratic form | Portfolio variance $\sigma_p^2 = w^\top \Sigma w$ |
-| KKT conditions | Necessary optimality conditions for the constrained QP |
-| Lagrange multipliers | Derive closed-form solutions analytically |
-
-(Took me a while to understand why the covariance matrix has to be positive semi-definite :3 )
+| Solver | `scipy.optimize.minimize`, `method="SLSQP"` |
+| Covariance | Sample covariance matrix |
+| Stability | `numpy.linalg.pinv` (pseudoinverse) for near-singular $\Sigma$ |
+| Long-only | $w_i \geq 0\ \forall i$ (toggleable) |
+| Monte Carlo | $\text{Dirichlet}(\mathbf{1})$ ensures $w_i > 0$, $\sum w_i = 1$ |
 
 ---
 
-## Motivation
+## Linear Algebra Concepts
 
-During my microeconomics course at university, we briefly covered 
-portfolio theory and the idea that diversification reduces risk and we calculated it through math.
-
-That really stuck with me and this project is my attempt to go deeper and to  
-implement Markowitz optimization from scratch and to understand the 
-linear algebra behind it, and verify the theory on real market data.
+| Concept | Role in Implementation |
+|---|---|
+| Positive semi-definite matrix | $\Sigma$ validity check: $w^\top \Sigma w \geq 0$ |
+| Pseudoinverse | Closed-form GMV and tangency under near-singularity |
+| Cholesky decomposition | Correlated return simulation: $R = ZL^\top$, $\Sigma = LL^\top$ |
+| Quadratic form | Portfolio variance $\sigma_p^2 = w^\top \Sigma w$ |
+| KKT conditions | Optimality conditions for the constrained QP |
+| Lagrange multipliers | Closed-form derivation of GMV and tangency |
 
 ---
 
 ## References
 
 - Markowitz, H. (1952). *Portfolio Selection*. **Journal of Finance**, 7(1), 77–91.
+- Michaud, R. (1989). *The Markowitz Optimization Enigma: Is Optimized Optimal?* **Financial Analysts Journal**.
 - Merton, R. (1972). *An Analytic Derivation of the Efficient Portfolio Frontier*. **JFQA**.
-- Boyd & Vandenberghe. *Convex Optimization*. Cambridge University Press. (Ch. 4, 7)
-- Luenberger. *Investment Science*. Oxford University Press.
+- Boyd & Vandenberghe. *Convex Optimization*. Cambridge University Press (Ch. 4, 7).
